@@ -3,31 +3,72 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>برنامج الجرد</title>
 
 <style>
 body {
   font-family: Arial;
-  padding: 20px;
+  padding: 15px;
   direction: rtl;
+  background: #f5f6fa;
 }
 
-input, select, textarea, button {
+h2 {
+  text-align: center;
+}
+
+.card {
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px #ddd;
+}
+
+input, select, textarea {
   width: 100%;
-  margin: 10px 0;
+  margin: 8px 0;
   padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 6px;
   font-size: 16px;
+  cursor: pointer;
+}
+
+.add {
+  background: #27ae60;
+  color: white;
+}
+
+.export {
+  background: #2980b9;
+  color: white;
 }
 
 table {
   width: 100%;
-  margin-top: 20px;
+  margin-top: 15px;
   border-collapse: collapse;
+  background: white;
+}
+
+th {
+  background: #2c3e50;
+  color: white;
 }
 
 td, th {
-  border: 1px solid #ccc;
   padding: 8px;
+  border: 1px solid #ddd;
+  text-align: center;
 }
 </style>
 
@@ -36,6 +77,8 @@ td, th {
 <body>
 
 <h2>📦 برنامج الجرد</h2>
+
+<div class="card">
 
 <label>التاريخ:</label>
 <input type="text" id="date" readonly>
@@ -55,7 +98,10 @@ td, th {
 <label>ملاحظات:</label>
 <textarea id="notes"></textarea>
 
-<button onclick="addItem()">➕ إضافة</button>
+<button class="add" onclick="addItem()">➕ إضافة</button>
+<button class="export" onclick="downloadCSV()">📊 تحميل Excel</button>
+
+</div>
 
 <table>
 <thead>
@@ -73,38 +119,55 @@ td, th {
 <script>
 document.getElementById("date").value = new Date().toLocaleDateString();
 
+let data = JSON.parse(localStorage.getItem("inventory") || "[]");
+
 function addItem() {
-  let date = document.getElementById("date").value;
-  let warehouse = document.getElementById("warehouse").value;
-  let item = document.getElementById("item").value;
-  let qty = document.getElementById("qty").value;
-  let notes = document.getElementById("notes").value;
+  let item = {
+    date: document.getElementById("date").value,
+    warehouse: document.getElementById("warehouse").value,
+    name: document.getElementById("item").value,
+    qty: document.getElementById("qty").value,
+    notes: document.getElementById("notes").value
+  };
 
-  let row = `<tr>
-    <td>${date}</td>
-    <td>${warehouse}</td>
-    <td>${item}</td>
-    <td>${qty}</td>
-    <td>${notes}</td>
-  </tr>`;
+  data.push(item);
+  localStorage.setItem("inventory", JSON.stringify(data));
 
-  document.getElementById("table").innerHTML += row;
-
-  saveData();
+  render();
 }
 
-function saveData() {
-  localStorage.setItem("inventory", document.getElementById("table").innerHTML);
+function render() {
+  let table = document.getElementById("table");
+  table.innerHTML = "";
+
+  data.forEach(d => {
+    table.innerHTML += `
+      <tr>
+        <td>${d.date}</td>
+        <td>${d.warehouse}</td>
+        <td>${d.name}</td>
+        <td>${d.qty}</td>
+        <td>${d.notes}</td>
+      </tr>
+    `;
+  });
 }
 
-function loadData() {
-  let data = localStorage.getItem("inventory");
-  if (data) {
-    document.getElementById("table").innerHTML = data;
-  }
+function downloadCSV() {
+  let csv = "تاريخ,مستودع,مادة,كمية,ملاحظات\n";
+
+  data.forEach(d => {
+    csv += `${d.date},${d.warehouse},${d.name},${d.qty},${d.notes}\n`;
+  });
+
+  let blob = new Blob([csv], { type: 'text/csv' });
+  let a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "inventory.csv";
+  a.click();
 }
 
-loadData();
+render();
 </script>
 
 </body>
