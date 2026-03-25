@@ -116,12 +116,25 @@ td, th {
 <tbody id="table"></tbody>
 </table>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD1Vlv8Myo3fQtg0xywgdlU59QkVHGrck8",
+  authDomain: "inventory-3d989.firebaseapp.com",
+  projectId: "inventory-3d989",
+  storageBucket: "inventory-3d989.firebasestorage.app",
+  messagingSenderId: "6994794985",
+  appId: "1:6994794985:web:0c73bb2055966c90ad1378"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
 document.getElementById("date").value = new Date().toLocaleDateString();
 
-let data = JSON.parse(localStorage.getItem("inventory") || "[]");
-
-function addItem() {
+async function addItem() {
   let item = {
     date: document.getElementById("date").value,
     warehouse: document.getElementById("warehouse").value,
@@ -130,17 +143,17 @@ function addItem() {
     notes: document.getElementById("notes").value
   };
 
-  data.push(item);
-  localStorage.setItem("inventory", JSON.stringify(data));
-
-  render();
+  await addDoc(collection(db, "inventory"), item);
+  loadData();
 }
 
-function render() {
+async function loadData() {
+  const querySnapshot = await getDocs(collection(db, "inventory"));
   let table = document.getElementById("table");
   table.innerHTML = "";
 
-  data.forEach(d => {
+  querySnapshot.forEach((doc) => {
+    let d = doc.data();
     table.innerHTML += `
       <tr>
         <td>${d.date}</td>
@@ -153,22 +166,12 @@ function render() {
   });
 }
 
-function downloadCSV() {
-  let csv = "تاريخ,مستودع,مادة,كمية,ملاحظات\n";
+window.addItem = addItem;
 
-  data.forEach(d => {
-    csv += `${d.date},${d.warehouse},${d.name},${d.qty},${d.notes}\n`;
-  });
-
-  let blob = new Blob([csv], { type: 'text/csv' });
-  let a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "inventory.csv";
-  a.click();
-}
-
-render();
+loadData();
 </script>
+
+
 
 </body>
 </html>
